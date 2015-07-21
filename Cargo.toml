@@ -1,0 +1,14 @@
+[package]
+name = "pipe"
+version = "0.0.1"
+authors = ["arcnmx"]
+
+description = "Synchronous Read/Write memory pipe"
+documentation = "http://arcnmx.github.io/pipe-rs/pipe/"
+repository = "https://github.com/arcnmx/pipe-rs"
+readme = "README.md"
+keywords = ["pipe", "synchronous", "read", "write"]
+license = "MIT"
+
+[dependencies]
+resize-slice = "0.0"
