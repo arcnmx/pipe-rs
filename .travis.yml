@@ -6,16 +6,12 @@ env:
 language: rust
 rust:
     - nightly
+    - beta
     - stable
 sudo: false
 
 os:
     - linux
-
-matrix:
-    fast_finish: true
-    allow_failures:
-        - rust: nightly
 
 script:
     - cargo test -v
