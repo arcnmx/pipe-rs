@@ -10,8 +10,5 @@ readme = "README.md"
 keywords = ["pipe", "synchronous", "read", "write"]
 license = "MIT"
 
-[dependencies]
-resize-slice = "0.0"
-
 [features]
 bench = []

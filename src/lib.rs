@@ -20,13 +20,10 @@
 //! assert_eq!(&s, message);
 //! ```
 
-extern crate resize_slice;
-
 use std::sync::mpsc::{sync_channel, SyncSender, Receiver};
 use std::io::{self, Read, Write};
 use std::cmp::min;
 use std::ptr::copy_nonoverlapping;
-use resize_slice::ResizeSlice;
 
 /// The `Read` end of a pipe (see `pipe()`)
 pub struct PipeReader(Receiver<Vec<u8>>, Vec<u8>);
@@ -57,10 +54,10 @@ impl PipeReader {
 }
 
 impl Read for PipeReader {
-    fn read(&mut self, mut buf: &mut [u8]) -> io::Result<usize> {
+    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
         let buf_len = min(buf.len(), self.1.len());
         unsafe { copy_nonoverlapping(self.1.as_ptr(), buf.as_mut_ptr(), buf_len); }
-        buf.resize_from(buf_len);
+        let buf = &mut buf[buf_len..];
 
         if buf.len() == 0 {
             return Ok(buf_len)
