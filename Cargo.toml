@@ -12,3 +12,6 @@ license = "MIT"
 
 [dependencies]
 resize-slice = "0.0"
+
+[features]
+bench = []

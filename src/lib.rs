@@ -1,4 +1,5 @@
 #![deny(missing_docs)]
+#![cfg_attr(all(feature = "bench", test), feature(test))]
 
 //! Synchronous in-memory pipe
 //!
@@ -130,5 +131,36 @@ mod tests {
         assert!(w.write_all(i).is_err());
 
         guard.join().unwrap();
+    }
+}
+
+#[cfg(all(test, feature = "bench"))]
+mod bench {
+    extern crate test;
+    use std::thread::spawn;
+    use std::io::{Read, Write};
+    use self::test::Bencher;
+    use super::*;
+
+    #[bench]
+    fn pipe_bench(b: &mut Bencher) {
+        use std::iter::repeat;
+        use std::io::{copy, sink};
+
+        let data = repeat(0).enumerate().map(|(i, _)| i as u8).take(0x1000).collect::<Vec<_>>();
+        b.bytes = data.len() as u64 * 0x100;
+        b.iter(|| {
+            let (mut r, mut w) = pipe();
+            let data = data.clone();
+            let guard = spawn(move || {
+                for _ in 0..0x100 {
+                    w.write_all(&data[..]).unwrap();
+                }
+            });
+
+            copy(&mut r, &mut sink()).unwrap();
+
+            guard.join().unwrap();
+        });
     }
 }
