@@ -1,36 +1,38 @@
+language: rust
+rust:
+    - stable
+    - beta
+    - nightly
+sudo: false
+dist: trusty
+os: linux
+cache:
+    directories:
+        - $HOME/.cargo
+        - target
 env:
     global:
         - secure: "hrpQNYCQVQZu8Fem46jKa80UQsbj85BVO03MyBkM9+GdW+og4gSFKCt2S5m3Ac+7I5TXJSF4m6il1Z/eoydT/ISlVAw4MlKuouzChlhaA5dqkJJy1kGHRMgMJuc1HmKzVsLlvl8hZgtSGPwXjrVHZFYXa9/IFxCf0KD5r7Gv9Tmq8fNXI6pSamZnF3lN94JLjTKNCsUC/r0eccu1Nnfees/QqiCr4hRTyjKRiPyDnQqu5lYkZjaJqsMJQnagwqldk9VgixxQyYgYiPcMXdmA9DM5FJhtDUCHjyIwUxqf2FCtXSScwwAjjMMKTibmwZdvmZtLnVvwHtilGr7SbKeIGPqv/fsKms9AKUPmny3efu5Y5v3411tvSMJSUGd+PWpzqZVlaY0v4S7rAsf2BDlOpSHaXaujDvdAsO5bJHJeoQWpi9hItMZjM/TTCLfvttsln0LbDOuMvPYVrXMmABcoOcNPZKB1a/qqYAfR8cualX5kUPHSUCahAUPH3r9AzwT+BAovb2heLNwYMLa+Iv3T9vuceTkEijCAHTrYtChhNAUAlxA9YB/z/Qz7emfYq4Nbxv6dWzJuQIweM9p4KWefv9WMQXbkcIRrImcQetWailMIvtshvFwV6PC3JM3AXVhc/edEbPgv89Wd1osEqqLfV6O7lQvKXtzyHmI5wK8QcZQ="
         - secure: "bYatwjJXzDlY8lHsEPOZ7bgNpx9Mh2EMwujnhwQgWKMPsPJ8A10OsbsAh1rjpj5CbGH2m2y7zW454+ScQkQByQjledKSE8MYcp7ya3q2O0CErpQy5Vu72JojK4FIvS17mwn5vOZzVn1EI9K0QA8HzI2poAC0ISWcc/8pS8txrfDvkbwjvEtb3l4rz51aGl/9xqdp/9rv6mA544Mf6qVIONuKaIdZ0/m8Jqx+rsndf+9raDaRtPw+NByK/1Vl32F524a80EhJoKXvd1ymottX+jK0DQhLRBy8Ys3G9Ye6tA6usWx3Z7OYbiwnl6P2SftCRMI/lWtWCoVOUUI1BqQzZ2PLRxNj0KKZxP7jTKlaURa8GxdDCrj92vB2o/ou4WfLkXj1EmeBwKQfKQnxkm62KNVTwjUt8bhqmnq5wBGAwwutw8v85F+cEC0tLS98U7Vhwh6tM1N8NzL/C71ncFquXMZfu+Ctq9WGVETlJI8wZ0BAShI7cZcC87bpAiMe5jodPsUjJR20lRW+eHnISjf4aCOh3R46FATKIDvOL35U/59SFmd5A65KmJvJtHB8Tgg3KwZUWHjwmjMTkOi2Yiu3MLUTZspIY18SefgODlBp0kGou8QmaDkeoq9usGVt5rs9pwuPTCwNEM2CYqNJknmVW+3SjfL8CacvdnhDgD06V4s="
-
-language: rust
-rust:
-    - nightly
-    - beta
-    - stable
-sudo: false
-
-os:
-    - linux
+before_script:
+    - curl -L https://github.com/arcnmx/ci/archive/master.tar.gz | tar -xzC $HOME && . $HOME/ci-master/src
 
 script:
-    - cargo test -v
-
-before_deploy:
-    - cargo doc --no-deps -v
-    - cargo package -v
+    - cargo build
+    - cargo test
 
 deploy:
-    provider: releases
-    api_key:
-        secure: "GxEyPhp0Enh6085RggvgY1d5RMar1PsSSJluUpG7KBZQaSXPbJww77L1ugestEUbg9ehTPqe3indgGzbpHjgGT9XXKX+2a/S0Kqdzkm+M1LPEBwNlNhO574JpuW2OzRJlOpReZgmlPToYLeHdTaTnjH/Hy+BGzIqZ3XCVh9yP6kQD19dNELXS+/5pho1bmKvEMBhsUCyE2dtfDf21rPmX6mEg818QAwzzWlcPG7c40842A9ebDgbRQgW0JNHIrbJApzhPtpiO8GDTywX2PkPGIPz+u7zLjdXxYwd2mixd2+auU/u7wKXZ5vJJ0GVUSvJkR//JnoLCc6CHeAH7z+PARJRgHq6ykoUerb6T0vBN0P6q0l2nvi70oAcRxLfvPQuPBfw15xFEx9G/0w9PwaPAZpQLo3IApe5ev7AfMA392gMExs+9cQrWUv2XROFe/IMV/3tu80+5vOKdfoIOtC/CwF1ll29k9PCgCSZ3HEvuCkn1YOfqocRA4HsxAnU5BNLFHLMlwql68fGXcqS0UtFk0wOnilr8k0IIwcc8wfrZe6QTpzofQzGlY/5xSv3HbQ5Cjkpa4tdaZhL7wdGSvk7hPOzSpH/D/b4XGqtCjVDNXJdAXJ+AcpsgJsFazIIi7e8k0fevBtV8UNiwOmgY1T6iIIx113GRr6nN7bPRtW2KMs="
-    file: target/package/pipe-$TRAVIS_TAG.crate
-    skip_cleanup: true
+    provider: script
+    script: "true"
     on:
         tags: true
         all_branches: true
         condition: "$TRAVIS_RUST_VERSION = stable"
 
+before_deploy:
+    - cargo doc
+    - cargo package
+
 after_deploy:
-    - .travis/publish_docs.sh "$TRAVIS_TAG"
-    - cargo publish --token "$CRATES_IO_TOKEN"
+    - cargo pages-publish
+    - cargo publish
