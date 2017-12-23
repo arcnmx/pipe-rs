@@ -23,7 +23,6 @@
 use std::sync::mpsc::{sync_channel, SyncSender, Receiver};
 use std::io::{self, Read, Write};
 use std::cmp::min;
-use std::ptr::copy_nonoverlapping;
 
 /// The `Read` end of a pipe (see `pipe()`)
 pub struct PipeReader(Receiver<Vec<u8>>, Vec<u8>);
@@ -55,34 +54,28 @@ impl PipeReader {
 
 impl Read for PipeReader {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-        let buf_len = min(buf.len(), self.1.len());
-        unsafe { copy_nonoverlapping(self.1.as_ptr(), buf.as_mut_ptr(), buf_len); }
-        let buf = &mut buf[buf_len..];
-
-        if buf.len() == 0 {
-            return Ok(buf_len)
+        if buf.is_empty() {
+            return Ok(0);
         }
 
-        match self.0.recv() {
-            Err(_) => Ok(0),
-            Ok(data) => {
-                let len = min(buf.len(), data.len());
-                unsafe { copy_nonoverlapping(data.as_ptr(), buf.as_mut_ptr(), len); }
-                self.1.reserve(data.len() - len);
-                unsafe { copy_nonoverlapping(data[len..].as_ptr(), self.1.as_mut_ptr(), data.len() - len); }
-                Ok(buf_len + len)
-            },
+        while self.1.is_empty() {
+            match self.0.recv() {
+                // The only existing error from mpsc is EOF
+                Err(_) => return Ok(0),
+                Ok(data) => self.1 = data,
+            }
         }
+
+        let len = min(buf.len(), self.1.len());
+        buf[..len].copy_from_slice(&self.1[..len]);
+        self.1.drain(..len);
+        Ok(len)
     }
 }
 
 impl Write for PipeWriter {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-        let mut data = Vec::with_capacity(buf.len());
-        unsafe {
-            copy_nonoverlapping(buf.as_ptr(), data.as_mut_ptr(), buf.len());
-            data.set_len(buf.len());
-        }
+        let data = buf.to_vec();
 
         self.0.send(data)
             .map(|_| buf.len())
@@ -129,13 +122,38 @@ mod tests {
 
         guard.join().unwrap();
     }
+
+    #[test]
+    fn small_reads() {
+        let block_cnt = 20;
+        const BLOCK: usize = 20;
+        let (mut r, mut w) = pipe();
+        let guard = spawn(move || {
+            for _ in 0..block_cnt {
+                let data = &[0; BLOCK];
+                w.write_all(data).unwrap();
+            }
+        });
+
+        let mut buff = [0; BLOCK / 2];
+        let mut read = 0;
+        while let Ok(size) = r.read(&mut buff) {
+            // 0 means EOF
+            if size == 0 {
+                break;
+            }
+            read += size;
+        }
+        assert_eq!(block_cnt * BLOCK, read);
+
+        guard.join().unwrap();
+    }
 }
 
 #[cfg(all(test, feature = "bench"))]
 mod bench {
     extern crate test;
     use std::thread::spawn;
-    use std::io::{Read, Write};
     use self::test::Bencher;
     use super::*;
 
