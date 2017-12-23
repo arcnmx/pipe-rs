@@ -129,6 +129,32 @@ mod tests {
 
         guard.join().unwrap();
     }
+
+    #[test]
+    fn small_reads() {
+        let block_cnt = 20;
+        const BLOCK: usize = 20;
+        let (mut r, mut w) = pipe();
+        let guard = spawn(move || {
+            for _ in 0..block_cnt {
+                let data = &[0; BLOCK];
+                w.write_all(data).unwrap();
+            }
+        });
+
+        let mut buff = [0; BLOCK / 2];
+        let mut read = 0;
+        while let Ok(size) = r.read(&mut buff) {
+            // 0 means EOF
+            if size == 0 {
+                break;
+            }
+            read += size;
+        }
+        assert_eq!(block_cnt * BLOCK, read);
+
+        guard.join().unwrap();
+    }
 }
 
 #[cfg(all(test, feature = "bench"))]
