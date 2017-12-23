@@ -59,7 +59,7 @@ impl Read for PipeReader {
         unsafe { copy_nonoverlapping(self.1.as_ptr(), buf.as_mut_ptr(), buf_len); }
         let buf = &mut buf[buf_len..];
 
-        if buf.len() == 0 {
+        if buf.is_empty() {
             return Ok(buf_len)
         }
 
@@ -135,7 +135,6 @@ mod tests {
 mod bench {
     extern crate test;
     use std::thread::spawn;
-    use std::io::{Read, Write};
     use self::test::Bencher;
     use super::*;
 
