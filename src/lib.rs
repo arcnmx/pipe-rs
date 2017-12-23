@@ -1,4 +1,5 @@
 #![deny(missing_docs)]
+#![doc(html_root_url = "http://arcnmx.github.io/pipe-rs/")]
 #![cfg_attr(all(feature = "bench", test), feature(test))]
 
 //! Synchronous in-memory pipe
