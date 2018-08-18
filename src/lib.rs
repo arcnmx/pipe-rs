@@ -42,9 +42,9 @@ pub fn pipe() -> (PipeReader, PipeWriter) {
     (PipeReader(rx, Vec::new()), PipeWriter(tx))
 }
 
-/// Creates a pair of pipes for bidirectional communication.
+/// Creates a pair of pipes for bidirectional communication, a bit like UNIX's `socketpair(2)`.
 #[cfg(feature="readwrite")]
-pub fn socketpair() -> (readwrite::ReadWrite<PipeReader, PipeWriter>, readwrite::ReadWrite<PipeReader, PipeWriter>) {
+pub fn bipipe() -> (readwrite::ReadWrite<PipeReader, PipeWriter>, readwrite::ReadWrite<PipeReader, PipeWriter>) {
     let (r1,w1) = pipe();
     let (r2,w2) = pipe();
     ((r1,w2).into(), (r2,w1).into())
