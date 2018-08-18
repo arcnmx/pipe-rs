@@ -21,6 +21,9 @@
 //! assert_eq!(&s, message);
 //! ```
 
+#[cfg(feature="readwrite")]
+extern crate readwrite;
+
 use std::sync::mpsc::{sync_channel, SyncSender, Receiver};
 use std::io::{self, Read, Write};
 use std::cmp::min;
@@ -37,6 +40,14 @@ pub fn pipe() -> (PipeReader, PipeWriter) {
     let (tx, rx) = sync_channel(0);
 
     (PipeReader(rx, Vec::new()), PipeWriter(tx))
+}
+
+/// Creates a pair of pipes for bidirectional communication.
+#[cfg(feature="readwrite")]
+pub fn socketpair() -> (readwrite::ReadWrite<PipeReader, PipeWriter>, readwrite::ReadWrite<PipeReader, PipeWriter>) {
+    let (r1,w1) = pipe();
+    let (r2,w2) = pipe();
+    ((r1,w2).into(), (r2,w1).into())
 }
 
 impl PipeWriter {

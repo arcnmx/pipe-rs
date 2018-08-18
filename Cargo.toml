@@ -12,3 +12,8 @@ license = "MIT"
 
 [features]
 bench = []
+bidirectional = ["readwrite"]
+default = ["bidirectional"]
+
+[dependencies]
+readwrite = {version = "0.1", optional = true}
