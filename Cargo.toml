@@ -1,6 +1,6 @@
 [package]
 name = "pipe"
-version = "0.0.3"
+version = "0.1.0"
 authors = ["arcnmx"]
 
 description = "Synchronous Read/Write memory pipe"
@@ -13,7 +13,6 @@ license = "MIT"
 [features]
 bench = []
 bidirectional = ["readwrite"]
-default = ["bidirectional"]
 
 [dependencies]
 readwrite = {version = "0.1", optional = true}
