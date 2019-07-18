@@ -22,8 +22,9 @@
 
 #[cfg(feature="readwrite")]
 extern crate readwrite;
+extern crate crossbeam_channel;
 
-use std::sync::mpsc::{sync_channel, SyncSender, Receiver};
+use crossbeam_channel::{Sender, Receiver};
 use std::io::{self, Read, Write};
 use std::cmp::min;
 
@@ -32,11 +33,11 @@ pub struct PipeReader(Receiver<Vec<u8>>, Vec<u8>);
 
 /// The `Write` end of a pipe (see `pipe()`)
 #[derive(Clone)]
-pub struct PipeWriter(SyncSender<Vec<u8>>);
+pub struct PipeWriter(Sender<Vec<u8>>);
 
 /// Creates a synchronous memory pipe
 pub fn pipe() -> (PipeReader, PipeWriter) {
-    let (tx, rx) = sync_channel(0);
+    let (tx, rx) = crossbeam_channel::bounded(0);
 
     (PipeReader(rx, Vec::new()), PipeWriter(tx))
 }
@@ -51,7 +52,7 @@ pub fn bipipe() -> (readwrite::ReadWrite<PipeReader, PipeWriter>, readwrite::Rea
 
 impl PipeWriter {
     /// Extracts the inner `SyncSender` from the writer
-    pub fn into_inner(self) -> SyncSender<Vec<u8>> {
+    pub fn into_inner(self) -> Sender<Vec<u8>> {
         self.0
     }
 }
