@@ -25,6 +25,7 @@ before_script:
 script:
 - cargo build
 - cargo test
+- cargo bench
 deploy:
   provider: script
   script: "true"
