@@ -10,12 +10,24 @@ readme = "README.md"
 keywords = ["pipe", "synchronous", "read", "write"]
 license = "MIT"
 
+[lib]
+bench = false
+
+[[bench]]
+name = "pipe"
+harness = false
+
 [features]
 bench = []
 bidirectional = ["readwrite"]
 
 [dependencies]
+crossbeam-channel = "0.3.8"
 readwrite = {version = "0.1", optional = true}
+
+[dev-dependencies]
+criterion = "0.2"
+os_pipe = "0.8.1"
 
 [package.metadata.docs.rs]
 features = ["bidirectional"]

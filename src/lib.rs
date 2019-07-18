@@ -1,6 +1,5 @@
 #![deny(missing_docs)]
 #![doc(html_root_url = "http://arcnmx.github.io/pipe-rs/")]
-#![cfg_attr(all(feature = "bench", test), feature(test))]
 
 //! Synchronous in-memory pipe
 //!
@@ -23,8 +22,9 @@
 
 #[cfg(feature="readwrite")]
 extern crate readwrite;
+extern crate crossbeam_channel;
 
-use std::sync::mpsc::{sync_channel, SyncSender, Receiver};
+use crossbeam_channel::{Sender, Receiver};
 use std::io::{self, Read, Write};
 use std::cmp::min;
 
@@ -33,11 +33,11 @@ pub struct PipeReader(Receiver<Vec<u8>>, Vec<u8>);
 
 /// The `Write` end of a pipe (see `pipe()`)
 #[derive(Clone)]
-pub struct PipeWriter(SyncSender<Vec<u8>>);
+pub struct PipeWriter(Sender<Vec<u8>>);
 
 /// Creates a synchronous memory pipe
 pub fn pipe() -> (PipeReader, PipeWriter) {
-    let (tx, rx) = sync_channel(0);
+    let (tx, rx) = crossbeam_channel::bounded(0);
 
     (PipeReader(rx, Vec::new()), PipeWriter(tx))
 }
@@ -52,7 +52,7 @@ pub fn bipipe() -> (readwrite::ReadWrite<PipeReader, PipeWriter>, readwrite::Rea
 
 impl PipeWriter {
     /// Extracts the inner `SyncSender` from the writer
-    pub fn into_inner(self) -> SyncSender<Vec<u8>> {
+    pub fn into_inner(self) -> Sender<Vec<u8>> {
         self.0
     }
 }
@@ -159,35 +159,5 @@ mod tests {
         assert_eq!(block_cnt * BLOCK, read);
 
         guard.join().unwrap();
-    }
-}
-
-#[cfg(all(test, feature = "bench"))]
-mod bench {
-    extern crate test;
-    use std::thread::spawn;
-    use self::test::Bencher;
-    use super::*;
-
-    #[bench]
-    fn pipe_bench(b: &mut Bencher) {
-        use std::iter::repeat;
-        use std::io::{copy, sink};
-
-        let data = repeat(0).enumerate().map(|(i, _)| i as u8).take(0x1000).collect::<Vec<_>>();
-        b.bytes = data.len() as u64 * 0x100;
-        b.iter(|| {
-            let (mut r, mut w) = pipe();
-            let data = data.clone();
-            let guard = spawn(move || {
-                for _ in 0..0x100 {
-                    w.write_all(&data[..]).unwrap();
-                }
-            });
-
-            copy(&mut r, &mut sink()).unwrap();
-
-            guard.join().unwrap();
-        });
     }
 }
