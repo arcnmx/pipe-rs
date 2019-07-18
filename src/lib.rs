@@ -25,7 +25,7 @@ extern crate readwrite;
 extern crate crossbeam_channel;
 
 use crossbeam_channel::{Sender, Receiver};
-use std::io::{self, Read, Write};
+use std::io::{self, BufRead, Read, Write};
 use std::cmp::min;
 
 /// The `Read` end of a pipe (see `pipe()`)
@@ -64,23 +64,37 @@ impl PipeReader {
     }
 }
 
+impl BufRead for PipeReader {
+    fn fill_buf(&mut self) -> io::Result<&[u8]> {
+        while self.1.is_empty() {
+            match self.0.recv() {
+                // The only existing error is EOF
+                Err(_) => break,
+                Ok(data) => self.1 = data,
+            }
+        }
+
+        return Ok(&self.1);
+    }
+
+    fn consume(&mut self, amt: usize) {
+        self.1.drain(..amt);
+    }
+}
+
 impl Read for PipeReader {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
         if buf.is_empty() {
             return Ok(0);
         }
 
-        while self.1.is_empty() {
-            match self.0.recv() {
-                // The only existing error from mpsc is EOF
-                Err(_) => return Ok(0),
-                Ok(data) => self.1 = data,
-            }
-        }
+        let internal = self.fill_buf()?;
 
-        let len = min(buf.len(), self.1.len());
-        buf[..len].copy_from_slice(&self.1[..len]);
-        self.1.drain(..len);
+        let len = min(buf.len(), internal.len());
+        if len > 0 {
+            buf[..len].copy_from_slice(&internal[..len]);
+            self.consume(len);
+        }
         Ok(len)
     }
 }
