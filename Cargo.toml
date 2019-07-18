@@ -4,7 +4,7 @@ version = "0.2.0" # keep in sync with html_root_url
 authors = ["arcnmx"]
 
 description = "Synchronous Read/Write memory pipe"
-documentation = "http://docs.rs/pipe/"
+documentation = "https://docs.rs/pipe/"
 repository = "https://github.com/arcnmx/pipe-rs"
 readme = "README.md"
 keywords = ["pipe", "synchronous", "read", "write"]

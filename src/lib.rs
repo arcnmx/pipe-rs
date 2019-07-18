@@ -1,5 +1,5 @@
 #![deny(missing_docs)]
-#![doc(html_root_url = "http://docs.rs/pipe/0.2.0")]
+#![doc(html_root_url = "https://docs.rs/pipe/0.2.0")]
 #![cfg_attr(feature = "unstable-doc-cfg", feature(doc_cfg))]
 
 //! Synchronous in-memory pipe

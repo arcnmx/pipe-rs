@@ -9,6 +9,6 @@ A synchronous memory `Read`/`Write` pipe.
 [release-badge]: https://img.shields.io/crates/v/pipe.svg?style=flat-square
 [cargo]: https://crates.io/crates/pipe
 [docs-badge]: https://img.shields.io/badge/API-docs-blue.svg?style=flat-square
-[docs]: http://arcnmx.github.io/pipe-rs/pipe/
+[docs]: https://docs.rs/pipe/
 [license-badge]: https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square
 [license]: https://github.com/arcnmx/pipe-rs/blob/master/COPYING
