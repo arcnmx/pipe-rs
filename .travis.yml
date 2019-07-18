@@ -19,13 +19,15 @@ env:
   - CARGO_FEATURES=bidirectional
   global:
   - secure: "hrpQNYCQVQZu8Fem46jKa80UQsbj85BVO03MyBkM9+GdW+og4gSFKCt2S5m3Ac+7I5TXJSF4m6il1Z/eoydT/ISlVAw4MlKuouzChlhaA5dqkJJy1kGHRMgMJuc1HmKzVsLlvl8hZgtSGPwXjrVHZFYXa9/IFxCf0KD5r7Gv9Tmq8fNXI6pSamZnF3lN94JLjTKNCsUC/r0eccu1Nnfees/QqiCr4hRTyjKRiPyDnQqu5lYkZjaJqsMJQnagwqldk9VgixxQyYgYiPcMXdmA9DM5FJhtDUCHjyIwUxqf2FCtXSScwwAjjMMKTibmwZdvmZtLnVvwHtilGr7SbKeIGPqv/fsKms9AKUPmny3efu5Y5v3411tvSMJSUGd+PWpzqZVlaY0v4S7rAsf2BDlOpSHaXaujDvdAsO5bJHJeoQWpi9hItMZjM/TTCLfvttsln0LbDOuMvPYVrXMmABcoOcNPZKB1a/qqYAfR8cualX5kUPHSUCahAUPH3r9AzwT+BAovb2heLNwYMLa+Iv3T9vuceTkEijCAHTrYtChhNAUAlxA9YB/z/Qz7emfYq4Nbxv6dWzJuQIweM9p4KWefv9WMQXbkcIRrImcQetWailMIvtshvFwV6PC3JM3AXVhc/edEbPgv89Wd1osEqqLfV6O7lQvKXtzyHmI5wK8QcZQ="
-  - secure: "XSfVff5nhYT2mRi3XAZvRwLUm8Q8DJwfz9R1w3/nVAMQIx6XIqmF7yJDsqYhcTU0EwxGjxhMvFNXTqRCBsWeEHKogrkBsmEyWq8JcT93WMu2oz0GlfXI0RwO45TtZXFplkwYET+LFViO8OcHHLAFrsbqWCwv5jYNcrXSNiqW6VKMR30WAxNclyXTM2USSXaViYRugY5V0rJqdVDpS7vK9MFnSb1jYNEwT55AmopP8s2G1Z9XqlMqGtDzziuMq/52b7y3KYDmjYJMVsymzOVxbVCWz52JX0kFUqlcazYcJKUzQZPfifNoCX3EYlHMRcu+0wr5c/hTHxDjelUT4O0bV9sSutDsDd7W2zX6uMHFI3je2g5L7WHVxNeUzHY1QsWn9xzy7BRhlaXhCAgSIugWjMpre6bWZMmIORW/mD8ALzZZkz4ZwyLcF87tD9ck1BWQvN4IpT05f4w4Pi9kPUuNTWwGMqvZ2WHRskeY4ifBouiDq9QXvubQur5G4Y5j4/ethjfwQDCj0kO2JXEfMX1vWcnA0vRj2hU7xOCYoJ8WTu2JQvCOtGLrfiRzgaM+Rd17Ev4vSQtVWu+ZYWQR1LN8qOyir3BRSSkzkSjYSemVuPg6UOZyYKoN6X86r1iz++x4TTKHHD8LTlzv2+8vc9RHHcQUD+P7GeRHnpxd3YfABt0="
 before_script:
 - curl -L https://github.com/arcnmx/ci/archive/0.2.tar.gz | tar -xzC $HOME && . $HOME/ci-0.2/src
 script:
 - cargo build
 - cargo test
 - cargo bench
+- cargo doc
+- |
+  [[ $TRAVIS_RUST_VERSION != nightly ]] || cargo doc --features unstable-doc-cfg
 deploy:
   provider: script
   script: "true"
@@ -34,8 +36,6 @@ deploy:
     all_branches: true
     condition: "$TRAVIS_RUST_VERSION = stable && $CARGO_FEATURES == bidirectional"
 before_deploy:
-- cargo doc
 - cargo package
 after_deploy:
-- cargo pages-publish
 - cargo publish

@@ -1,5 +1,6 @@
 #![deny(missing_docs)]
-#![doc(html_root_url = "http://arcnmx.github.io/pipe-rs/")]
+#![doc(html_root_url = "http://docs.rs/pipe/0.2.0")]
+#![cfg_attr(feature = "unstable-doc-cfg", feature(doc_cfg))]
 
 //! Synchronous in-memory pipe
 //!
@@ -43,7 +44,8 @@ pub fn pipe() -> (PipeReader, PipeWriter) {
 }
 
 /// Creates a pair of pipes for bidirectional communication, a bit like UNIX's `socketpair(2)`.
-#[cfg(feature="readwrite")]
+#[cfg(feature = "bidirectional")]
+#[cfg_attr(feature = "unstable-doc-cfg", doc(cfg(feature = "bidirectional")))]
 pub fn bipipe() -> (readwrite::ReadWrite<PipeReader, PipeWriter>, readwrite::ReadWrite<PipeReader, PipeWriter>) {
     let (r1,w1) = pipe();
     let (r2,w2) = pipe();

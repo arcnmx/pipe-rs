@@ -1,10 +1,10 @@
 [package]
 name = "pipe"
-version = "0.2.0"
+version = "0.2.0" # keep in sync with html_root_url
 authors = ["arcnmx"]
 
 description = "Synchronous Read/Write memory pipe"
-documentation = "http://arcnmx.github.io/pipe-rs/pipe/"
+documentation = "http://docs.rs/pipe/"
 repository = "https://github.com/arcnmx/pipe-rs"
 readme = "README.md"
 keywords = ["pipe", "synchronous", "read", "write"]
@@ -19,6 +19,7 @@ harness = false
 
 [features]
 bidirectional = ["readwrite"]
+unstable-doc-cfg = []
 
 [dependencies]
 crossbeam-channel = "^0.3.8"
@@ -29,4 +30,4 @@ criterion = "^0.2.11"
 os_pipe = "^0.8.1"
 
 [package.metadata.docs.rs]
-features = ["bidirectional"]
+features = ["bidirectional", "unstable-doc-cfg"]
