@@ -24,7 +24,7 @@ before_script:
 script:
 - cargo build
 - cargo test
-- cargo bench
+- cargo bench -- --test
 - cargo doc
 - |
   [[ $TRAVIS_RUST_VERSION != nightly ]] || cargo doc --features unstable-doc-cfg
