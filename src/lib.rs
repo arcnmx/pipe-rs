@@ -33,6 +33,7 @@ use std::cmp::min;
 pub struct PipeReader {
     receiver: Receiver<Vec<u8>>,
     buffer: Vec<u8>,
+    position: usize,
 }
 
 /// The `Write` end of a pipe (see `pipe()`)
@@ -46,7 +47,7 @@ pub fn pipe() -> (PipeReader, PipeWriter) {
     let (sender, receiver) = crossbeam_channel::bounded(0);
 
     (
-        PipeReader { receiver, buffer: Vec::new() },
+        PipeReader { receiver, buffer: Vec::new(), position: 0 },
         PipeWriter { sender },
     )
 }
@@ -69,26 +70,29 @@ impl PipeWriter {
 
 impl PipeReader {
     /// Extracts the inner `Receiver` from the writer, and any pending buffered data
-    pub fn into_inner(self) -> (Receiver<Vec<u8>>, Vec<u8>) {
-        (self.receiver, self.buffer)
+    pub fn into_inner(mut self) -> (Receiver<Vec<u8>>, Vec<u8>) {
+        (self.receiver, self.buffer.split_off(min(self.position, self.buffer.len())))
     }
 }
 
 impl BufRead for PipeReader {
     fn fill_buf(&mut self) -> io::Result<&[u8]> {
-        while self.buffer.is_empty() {
+        while self.position >= self.buffer.len() {
             match self.receiver.recv() {
                 // The only existing error is EOF
                 Err(_) => break,
-                Ok(data) => self.buffer = data,
+                Ok(data) => {
+                    self.buffer = data;
+                    self.position = 0;
+                }
             }
         }
 
-        return Ok(&self.buffer);
+        Ok(&self.buffer[min(self.position, self.buffer.len())..])
     }
 
     fn consume(&mut self, amt: usize) {
-        self.buffer.drain(..amt);
+        self.position += amt
     }
 }
 
