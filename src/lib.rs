@@ -26,11 +26,11 @@ extern crate readwrite;
 extern crate crossbeam_channel;
 
 use crossbeam_channel::{Sender, Receiver};
-use std::io::{self, BufRead, Read, Write};
+use std::io::{self, BufRead, Read, Write, Cursor};
 use std::cmp::min;
 
 /// The `Read` end of a pipe (see `pipe()`)
-pub struct PipeReader(Receiver<Vec<u8>>, Vec<u8>);
+pub struct PipeReader(Receiver<Vec<u8>>, Cursor<Vec<u8>>);
 
 /// The `Write` end of a pipe (see `pipe()`)
 #[derive(Clone)]
@@ -40,7 +40,7 @@ pub struct PipeWriter(Sender<Vec<u8>>);
 pub fn pipe() -> (PipeReader, PipeWriter) {
     let (tx, rx) = crossbeam_channel::bounded(0);
 
-    (PipeReader(rx, Vec::new()), PipeWriter(tx))
+    (PipeReader(rx, Cursor::new(Vec::new())), PipeWriter(tx))
 }
 
 /// Creates a pair of pipes for bidirectional communication, a bit like UNIX's `socketpair(2)`.
@@ -62,25 +62,26 @@ impl PipeWriter {
 impl PipeReader {
     /// Extracts the inner `Receiver` from the writer, and any pending buffered data
     pub fn into_inner(self) -> (Receiver<Vec<u8>>, Vec<u8>) {
-        (self.0, self.1)
+        let position = self.1.position() as usize;
+        (self.0, self.1.into_inner().split_off(position))
     }
 }
 
 impl BufRead for PipeReader {
     fn fill_buf(&mut self) -> io::Result<&[u8]> {
-        while self.1.is_empty() {
+        while self.1.position() >= self.1.get_ref().len() as u64 {
             match self.0.recv() {
                 // The only existing error is EOF
                 Err(_) => break,
-                Ok(data) => self.1 = data,
+                Ok(data) => self.1 = Cursor::new(data),
             }
         }
 
-        return Ok(&self.1);
+        return Ok(&self.1.get_ref()[self.1.position() as usize..]);
     }
 
     fn consume(&mut self, amt: usize) {
-        self.1.drain(..amt);
+        self.1.set_position(self.1.position() + amt as u64)
     }
 }
 
