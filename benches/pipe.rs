@@ -6,6 +6,7 @@ extern crate pipe;
 use criterion::{black_box, Bencher, Criterion, ParameterizedBenchmark, Throughput};
 use std::convert::TryInto;
 use std::io::prelude::*;
+use std::io::BufWriter;
 use std::thread;
 
 const TOTAL_TO_SEND: usize = 1 * 1024 * 1024;
@@ -30,6 +31,7 @@ where
             for _ in 0..(TOTAL_TO_SEND / size) {
                 writer.write_all(black_box(&buf[..])).unwrap();
             }
+            writer.flush().unwrap();
             drop(writer);
             t.join().expect("writing failed");
         })
@@ -38,7 +40,6 @@ where
 
 fn pipe_send(c: &mut Criterion) {
     const KB: usize = 1024;
-    //const SIZES: &[usize] = &[4 * KB, 64 * KB];
     const SIZES: &[usize] = &[4 * KB, 8 * KB, 16 * KB, 32 * KB, 64 * KB];
 
     let bench = ParameterizedBenchmark::new( "pipe-rs", send_recv_size(|| pipe::pipe(), 1), SIZES)
@@ -54,6 +55,14 @@ fn pipe_send(c: &mut Criterion) {
     c.bench("pipe_send", bench);
 
     let bench = ParameterizedBenchmark::new( "pipe-rs buffered (16 reads per write)", send_recv_size(|| pipe::pipe_buffered(), 16), SIZES)
+        .throughput(|_| Throughput::Bytes(TOTAL_TO_SEND.try_into().unwrap()));
+    c.bench("pipe_send", bench);
+
+    let bench = ParameterizedBenchmark::new( "pipe-rs BufWriter", send_recv_size(|| { let (r, w) = pipe::pipe(); (r, BufWriter::new(w))}, 1), SIZES)
+        .throughput(|_| Throughput::Bytes(TOTAL_TO_SEND.try_into().unwrap()));
+    c.bench("pipe_send", bench);
+
+    let bench = ParameterizedBenchmark::new( "pipe-rs BufWriter (16 reads per write)", send_recv_size(|| { let (r, w) = pipe::pipe(); (r, BufWriter::new(w))}, 16), SIZES)
         .throughput(|_| Throughput::Bytes(TOTAL_TO_SEND.try_into().unwrap()));
     c.bench("pipe_send", bench);
 
