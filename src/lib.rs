@@ -26,13 +26,14 @@ extern crate readwrite;
 extern crate crossbeam_channel;
 
 use crossbeam_channel::{Sender, Receiver};
-use std::io::{self, BufRead, Read, Write, Cursor};
+use std::io::{self, BufRead, Read, Write};
 use std::cmp::min;
 
 /// The `Read` end of a pipe (see `pipe()`)
 pub struct PipeReader {
     receiver: Receiver<Vec<u8>>,
-    buffer: Cursor<Vec<u8>>,
+    buffer: Vec<u8>,
+    position: usize,
 }
 
 /// The `Write` end of a pipe (see `pipe()`)
@@ -43,7 +44,7 @@ pub struct PipeWriter(Sender<Vec<u8>>);
 pub fn pipe() -> (PipeReader, PipeWriter) {
     let (tx, rx) = crossbeam_channel::bounded(0);
 
-    (PipeReader { receiver: rx, buffer: Cursor::new(Vec::new()) }, PipeWriter(tx))
+    (PipeReader{ receiver: rx, buffer: Vec::new(), position: 0 }, PipeWriter(tx))
 }
 
 /// Creates a pair of pipes for bidirectional communication, a bit like UNIX's `socketpair(2)`.
@@ -64,27 +65,29 @@ impl PipeWriter {
 
 impl PipeReader {
     /// Extracts the inner `Receiver` from the writer, and any pending buffered data
-    pub fn into_inner(self) -> (Receiver<Vec<u8>>, Vec<u8>) {
-        let position = self.buffer.position() as usize;
-        (self.receiver, self.buffer.into_inner().split_off(position))
+    pub fn into_inner(mut self) -> (Receiver<Vec<u8>>, Vec<u8>) {
+        (self.receiver, self.buffer.split_off(min(self.position, self.buffer.len())))
     }
 }
 
 impl BufRead for PipeReader {
     fn fill_buf(&mut self) -> io::Result<&[u8]> {
-        while self.buffer.position() >= self.buffer.get_ref().len() as u64 {
+        while self.position >= self.buffer.len() {
             match self.receiver.recv() {
                 // The only existing error is EOF
                 Err(_) => break,
-                Ok(data) => self.buffer = Cursor::new(data),
+                Ok(data) => {
+                    self.buffer = data;
+                    self.position = 0;
+                }
             }
         }
 
-        return Ok(&self.buffer.get_ref()[self.buffer.position() as usize..]);
+        Ok(&self.buffer[min(self.position, self.buffer.len())..])
     }
 
     fn consume(&mut self, amt: usize) {
-        self.buffer.set_position(self.buffer.position() + amt as u64)
+        self.position += amt
     }
 }
 
