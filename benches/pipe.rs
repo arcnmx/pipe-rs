@@ -6,6 +6,7 @@ extern crate pipe;
 use criterion::{black_box, Bencher, Criterion, ParameterizedBenchmark, Throughput};
 use std::convert::TryInto;
 use std::io::prelude::*;
+use std::io::BufWriter;
 use std::thread;
 
 const TOTAL_TO_SEND: usize = 1 * 1024 * 1024;
@@ -30,6 +31,7 @@ where
             for _ in 0..(TOTAL_TO_SEND / size) {
                 writer.write_all(black_box(&buf[..])).unwrap();
             }
+            writer.flush().unwrap();
             drop(writer);
             t.join().expect("writing failed");
         })
@@ -53,6 +55,11 @@ fn pipe_send(c: &mut Criterion) {
         SIZES,
     );
     let bench = bench
+        .with_function("pipe-rs-buffered", send_recv_size(|| pipe::pipe_buffered()))
+        .with_function("pipe-rs-bufwrite", send_recv_size(|| {
+            let (r, w) = pipe::pipe();
+            (r, BufWriter::new(w))
+        }))
         .with_function("os_pipe", send_recv_size(|| os_pipe::pipe().unwrap()))
         .throughput(|_| Throughput::Bytes(TOTAL_TO_SEND.try_into().unwrap()));
     c.bench("pipe_send", bench);
