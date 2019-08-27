@@ -38,14 +38,22 @@ where
 
 fn pipe_send(c: &mut Criterion) {
     const KB: usize = 1024;
-    const SIZES: &[usize] = &[4 * KB, 64 * KB];
-    //&[4 * KB, 8 * KB, 16 * KB, 32 * KB, 64 * KB],
+    //const SIZES: &[usize] = &[4 * KB, 64 * KB];
+    const SIZES: &[usize] = &[4 * KB, 8 * KB, 16 * KB, 32 * KB, 64 * KB];
 
     let bench = ParameterizedBenchmark::new( "pipe-rs", send_recv_size(|| pipe::pipe(), 1), SIZES)
         .throughput(|_| Throughput::Bytes(TOTAL_TO_SEND.try_into().unwrap()));
     c.bench("pipe_send", bench);
 
     let bench = ParameterizedBenchmark::new( "pipe-rs (16 reads per write)", send_recv_size(|| pipe::pipe(), 16), SIZES)
+        .throughput(|_| Throughput::Bytes(TOTAL_TO_SEND.try_into().unwrap()));
+    c.bench("pipe_send", bench);
+
+    let bench = ParameterizedBenchmark::new( "pipe-rs buffered", send_recv_size(|| pipe::pipe_buffered(), 1), SIZES)
+        .throughput(|_| Throughput::Bytes(TOTAL_TO_SEND.try_into().unwrap()));
+    c.bench("pipe_send", bench);
+
+    let bench = ParameterizedBenchmark::new( "pipe-rs buffered (16 reads per write)", send_recv_size(|| pipe::pipe_buffered(), 16), SIZES)
         .throughput(|_| Throughput::Bytes(TOTAL_TO_SEND.try_into().unwrap()));
     c.bench("pipe_send", bench);
 
