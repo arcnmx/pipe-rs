@@ -30,17 +30,25 @@ use std::io::{self, BufRead, Read, Write};
 use std::cmp::min;
 
 /// The `Read` end of a pipe (see `pipe()`)
-pub struct PipeReader(Receiver<Vec<u8>>, Vec<u8>);
+pub struct PipeReader {
+    receiver: Receiver<Vec<u8>>,
+    buffer: Vec<u8>,
+}
 
 /// The `Write` end of a pipe (see `pipe()`)
 #[derive(Clone)]
-pub struct PipeWriter(Sender<Vec<u8>>);
+pub struct PipeWriter {
+    sender: Sender<Vec<u8>>
+}
 
 /// Creates a synchronous memory pipe
 pub fn pipe() -> (PipeReader, PipeWriter) {
-    let (tx, rx) = crossbeam_channel::bounded(0);
+    let (sender, receiver) = crossbeam_channel::bounded(0);
 
-    (PipeReader(rx, Vec::new()), PipeWriter(tx))
+    (
+        PipeReader { receiver, buffer: Vec::new() },
+        PipeWriter { sender },
+    )
 }
 
 /// Creates a pair of pipes for bidirectional communication, a bit like UNIX's `socketpair(2)`.
@@ -55,32 +63,32 @@ pub fn bipipe() -> (readwrite::ReadWrite<PipeReader, PipeWriter>, readwrite::Rea
 impl PipeWriter {
     /// Extracts the inner `SyncSender` from the writer
     pub fn into_inner(self) -> Sender<Vec<u8>> {
-        self.0
+        self.sender
     }
 }
 
 impl PipeReader {
     /// Extracts the inner `Receiver` from the writer, and any pending buffered data
     pub fn into_inner(self) -> (Receiver<Vec<u8>>, Vec<u8>) {
-        (self.0, self.1)
+        (self.receiver, self.buffer)
     }
 }
 
 impl BufRead for PipeReader {
     fn fill_buf(&mut self) -> io::Result<&[u8]> {
-        while self.1.is_empty() {
-            match self.0.recv() {
+        while self.buffer.is_empty() {
+            match self.receiver.recv() {
                 // The only existing error is EOF
                 Err(_) => break,
-                Ok(data) => self.1 = data,
+                Ok(data) => self.buffer = data,
             }
         }
 
-        return Ok(&self.1);
+        return Ok(&self.buffer);
     }
 
     fn consume(&mut self, amt: usize) {
-        self.1.drain(..amt);
+        self.buffer.drain(..amt);
     }
 }
 
@@ -105,7 +113,7 @@ impl Write for PipeWriter {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
         let data = buf.to_vec();
 
-        self.0.send(data)
+        self.sender.send(data)
             .map(|_| buf.len())
             .map_err(|_| io::Error::new(io::ErrorKind::BrokenPipe, "pipe reader has been dropped"))
     }
