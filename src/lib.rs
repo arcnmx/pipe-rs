@@ -71,7 +71,8 @@ impl PipeWriter {
 impl PipeReader {
     /// Extracts the inner `Receiver` from the writer, and any pending buffered data
     pub fn into_inner(mut self) -> (Receiver<Vec<u8>>, Vec<u8>) {
-        (self.receiver, self.buffer.split_off(min(self.position, self.buffer.len())))
+        self.buffer.drain(..self.position);
+        (self.receiver, self.buffer)
     }
 }
 
@@ -88,10 +89,11 @@ impl BufRead for PipeReader {
             }
         }
 
-        Ok(&self.buffer[min(self.position, self.buffer.len())..])
+        Ok(&self.buffer[self.position..])
     }
 
     fn consume(&mut self, amt: usize) {
+        debug_assert!(self.buffer.len() - self.position >= amt);
         self.position += amt
     }
 }
