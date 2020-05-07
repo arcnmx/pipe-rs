@@ -22,12 +22,12 @@ bidirectional = ["readwrite"]
 unstable-doc-cfg = []
 
 [dependencies]
-crossbeam-channel = "^0.3.8"
+crossbeam-channel = "^0.4.0"
 readwrite = { version = "^0.1.1", optional = true }
 
 [dev-dependencies]
-criterion = "^0.2.11"
-os_pipe = "^0.8.1"
+criterion = "^0.3.0"
+os_pipe = "^0.9.0"
 
 [package.metadata.docs.rs]
 features = ["bidirectional", "unstable-doc-cfg"]
