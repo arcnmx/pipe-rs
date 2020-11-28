@@ -115,7 +115,7 @@ impl Read for PipeReader {
     }
 }
 
-impl Write for PipeWriter {
+impl Write for &'_ PipeWriter {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
         let data = buf.to_vec();
 
@@ -126,6 +126,18 @@ impl Write for PipeWriter {
 
     fn flush(&mut self) -> io::Result<()> {
         Ok(())
+    }
+}
+
+impl Write for PipeWriter {
+    #[inline]
+    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+        Write::write(&mut &*self, buf)
+    }
+
+    #[inline]
+    fn flush(&mut self) -> io::Result<()> {
+        Write::flush(&mut &*self)
     }
 }
 
