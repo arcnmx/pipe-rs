@@ -69,7 +69,7 @@ pub fn pipe() -> (PipeReader, PipeWriter) {
 pub fn pipe_buffered() -> (PipeReader, PipeBufWriter) {
     let (tx, rx) = crossbeam_channel::bounded(0);
 
-    (PipeReader{ receiver: rx, buffer: Vec::new(), position: 0 }, PipeBufWriter { sender: Some(tx), buffer: Vec::with_capacity(DEFAULT_BUF_SIZE), size: DEFAULT_BUF_SIZE } )
+    (PipeReader { receiver: rx, buffer: Vec::new(), position: 0 }, PipeBufWriter { sender: Some(tx), buffer: Vec::with_capacity(DEFAULT_BUF_SIZE), size: DEFAULT_BUF_SIZE } )
 }
 
 /// Creates a pair of pipes for bidirectional communication, a bit like UNIX's `socketpair(2)`.
@@ -168,6 +168,18 @@ impl PipeReader {
     pub fn into_inner(mut self) -> (Receiver<Vec<u8>>, Vec<u8>) {
         self.buffer.drain(..self.position);
         (self.receiver, self.buffer)
+    }
+}
+
+/// Creates a new handle to the `PipeReader` with a fresh new buffer. Any pending data is still
+/// owned by the existing reader and will not be accessible from the new handle.
+impl Clone for PipeReader {
+    fn clone(&self) -> Self {
+        Self {
+            receiver: self.receiver.clone(),
+            buffer: Vec::new(),
+            position: 0,
+        }
     }
 }
 
