@@ -66,6 +66,18 @@ impl PipeWriter {
     pub fn into_inner(self) -> Sender<Vec<u8>> {
         self.sender
     }
+
+    /// Gets a reference to the underlying `Sender`
+    pub fn sender(&self) -> &Sender<Vec<u8>> {
+        &self.sender
+    }
+
+    /// Write data to the associated `PipeReader`
+    pub fn send<B: Into<Vec<u8>>>(&self, bytes: B) -> io::Result<()> {
+        self.sender.send(bytes.into())
+            .map_err(|_| io::Error::new(io::ErrorKind::BrokenPipe, "pipe reader has been dropped"))
+            .map(drop)
+    }
 }
 
 impl PipeReader {
@@ -119,9 +131,8 @@ impl Write for &'_ PipeWriter {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
         let data = buf.to_vec();
 
-        self.sender.send(data)
+        self.send(data)
             .map(|_| buf.len())
-            .map_err(|_| io::Error::new(io::ErrorKind::BrokenPipe, "pipe reader has been dropped"))
     }
 
     fn flush(&mut self) -> io::Result<()> {
