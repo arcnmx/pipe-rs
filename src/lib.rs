@@ -169,6 +169,11 @@ impl PipeReader {
         self.buffer.drain(..self.position);
         (self.receiver, self.buffer)
     }
+
+    /// Returns a reference to the internally buffered data.
+    pub fn buffer(&self) -> &[u8] {
+        &self.buffer[self.position..]
+    }
 }
 
 /// Creates a new handle to the `PipeReader` with a fresh new buffer. Any pending data is still
