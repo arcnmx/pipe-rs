@@ -62,7 +62,7 @@ pub fn bipipe() -> (readwrite::ReadWrite<PipeReader, PipeWriter>, readwrite::Rea
 }
 
 impl PipeWriter {
-    /// Extracts the inner `SyncSender` from the writer
+    /// Extracts the inner `Sender` from the writer
     pub fn into_inner(self) -> Sender<Vec<u8>> {
         self.sender
     }
